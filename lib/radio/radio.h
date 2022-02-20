@@ -3,8 +3,6 @@
 
 void setupRadioScanner();
 void updateRadioScanner();
-// void scanChannels();
-// void shutdownRadio();
 
 void setupRadioTransmitter();
 void sendCommand();

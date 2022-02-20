@@ -11,16 +11,12 @@ void setup()
 
 	// setupRadioScanner();
 	setupRadioTransmitter();
-	// Serial.println("nRF24 initialised");
-
-	// delay_ms(1);
-	// scanChannels();
 }
 
 void loop()
 {
-	// Serial.println("Loop");
 	// updateRadioScanner();
+
 	sendCommand();
 	delay(2000);
 }

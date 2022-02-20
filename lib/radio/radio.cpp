@@ -1,6 +1,8 @@
 #include <RF24.h>
 #include <SPI.h>
+//#include <pinout.h>
 
+// pinout.h isn't being resolved for some reason so just defining here.
 #define PIN_RADIO_CE 9
 #define PIN_RADIO_CSN 10
 
@@ -38,8 +40,14 @@ void updateRadioScanner()
 
 		radio.read(&data, sizeof(data));
 
-		if (data[0] == 0x67 && data[1] == 0x22 && data[13] == 0x20)
-		// if (data[0] == 0x67 && data[1] == 0x22)
+		// Byte 13 contains the command:
+		// 0x20 on/off
+		// 0x40 color temperature + (more blue)
+		// 0x7F color temperature - (more red)
+		// 0x80 brightness +
+		// 0xBF brightness -
+
+		if (data[0] == 0x67 && data[1] == 0x22) // Capture all events from the remote
 		{
 			Serial.println("=========================");
 			Serial.println("Light Bar Packet received");
@@ -100,9 +108,6 @@ void setupRadioTransmitter()
 	Serial.println("Disable auto-ACK...");
 	radio.setAutoAck(false);
 
-	// radio.startListening();
-	// radio.printPrettyDetails();
-
 	Serial.println("Set PA Level LOW...");
 	radio.setPALevel(RF24_PA_LOW);
 
@@ -115,13 +120,15 @@ void setupRadioTransmitter()
 	Serial.println("Open writing pipe");
 	radio.openWritingPipe(address); // always uses pipe 0
 
+	radio.printPrettyDetails();
+
 	Serial.println("Stop listening");
 	radio.stopListening();
 }
 
 void sendCommand()
 {
-
+	// Captured sequences from remote
 	uint8_t commands[5][17] = {
 		{0x67,
 		 0x22,
@@ -209,37 +216,19 @@ void sendCommand()
 		 0xE5,
 		 0x93}};
 
-	Serial.println("sendCommand");
-	// uint8_t commandOnOff[17] = {
-	// 	0x67,
-	// 	0x22,
-	// 	0x9B,
-	// 	0xA3,
-	// 	0x89,
-	// 	0x26,
-	// 	0x82,
-	// 	0x4A,
-	// 	0x2D,
-	// 	0xE4,
-	// 	0x3F,
-	// 	0xE0, // 11: counter
-	// 	0x80,
-	// 	0x20, // 13: command
-	// 	0x0D,
-	// 	0xDB,
-	// 	0xD2};
-
 	counter++;
 
-	// Serial.println("transmitting");
-	// Serial.println(commandOnOff[11]);
+	// Send repeatedly, response is unreliable otherwise
 	for (int i = 0; i < 17; i++)
 	{
 		bool report = radio.write(&commands[counter % 5], sizeof(commands[0]), true);
 
 		if (!report)
+		{
 			Serial.println("write fail...");
+		}
 
+		// Without the delay, it'll work some times and not others
 		delay(20);
 	}
 }
